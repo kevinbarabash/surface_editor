@@ -29,7 +29,10 @@ function range(first, last, step) {
 
 function init() {
 
-    camera	= new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10000);
+    //camera	= new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 10000);
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    camera	= new THREE.OrthographicCamera(-width/2, width/2, height/2, -height/2, 0.01, 10000);
     camera.position.z = 1000;
 
     scene = new THREE.Scene();
@@ -43,9 +46,9 @@ function init() {
     var geometry = new THREE.Geometry();
     
     var radius = 200;
-    var helix = helixGen(radius, 10.0);
-    var helixPrime = helixGenPrime(radius, 10.0);
-    var values = range(-4 * Math.PI, 4 * Math.PI, 0.1);
+    var helix = helixGen(radius, 70.0);
+    var helixPrime = helixGenPrime(radius, 70.0);
+    var values = range(-2 * Math.PI, 2 * Math.PI, 0.1);
 
     values.forEach(function (t) {
         var pos = helix(t);
@@ -54,31 +57,30 @@ function init() {
 
     var up = new THREE.Vector3(0, 0, 1);
     
-    var startPos = helix(-4 * Math.PI);
+    var startPos = helix(-2 * Math.PI);
     startPos = new THREE.Vector3(startPos[0], startPos[1], startPos[2]);
-    var startNorm = helixPrime(-4 * Math.PI);
+    var startNorm = helixPrime(-2 * Math.PI);
     startNorm = new THREE.Vector3(startNorm[0], startNorm[1], startNorm[2]);
-    startNorm.normalize();
     startNorm.normalize();
     var startQuat = new THREE.Quaternion();
     startQuat.setFromUnitVectors(up, startNorm);
 
-    var endPos = helix(4 * Math.PI);
-    endPos = new THREE.Vector3(endPos[0], endPos[1], endPos[2]);
-    var endNorm = helixPrime(4 * Math.PI);
-    endNorm = new THREE.Vector3(endNorm[0], endNorm[1], endNorm[2]);
-    endNorm.normalize();
-    var endQuat = new THREE.Quaternion();
-    endQuat.setFromUnitVectors(up, endNorm);
+    //var endPos = helix(4 * Math.PI);
+    //endPos = new THREE.Vector3(endPos[0], endPos[1], endPos[2]);
+    //var endNorm = helixPrime(4 * Math.PI);
+    //endNorm = new THREE.Vector3(endNorm[0], endNorm[1], endNorm[2]);
+    //endNorm.normalize();
+    //var endQuat = new THREE.Quaternion();
+    //endQuat.setFromUnitVectors(up, endNorm);
     
-    material = new THREE.LineBasicMaterial({ color: 0xff0000 });
-    var line = new THREE.Line( geometry, material );
+    var lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    var line = new THREE.Line( geometry, lineMaterial );
     scene.add( line );
 
-    geometry = new THREE.PlaneGeometry( 100, 100, 2, 2 );
+    geometry = new THREE.PlaneGeometry( 200, 200, 2, 2 );
     var material = new THREE.MeshBasicMaterial({
         color: new THREE.Color(1.0, 0.0, 0.0), 
-        //side: THREE.DoubleSide,
+        side: THREE.DoubleSide,
         transparent: true,
         opacity: 0.5
     });
@@ -88,10 +90,92 @@ function init() {
     plane1.quaternion.multiply(startQuat);
     scene.add( plane1 );
     
-    var plane2 = new THREE.Mesh( geometry, material );
-    plane2.position.set(endPos.x, endPos.y, endPos.z);
-    plane2.quaternion.multiply(endQuat);
-    scene.add( plane2 );
+    //var plane2 = new THREE.Mesh( geometry, material );
+    //plane2.position.set(endPos.x, endPos.y, endPos.z);
+    //plane2.quaternion.multiply(endQuat);
+    //scene.add( plane2 );
+    
+    var hexRadius = 50;
+    var hexGeometry = new THREE.Geometry();
+    for (var i = 0; i <= 6; i++) {
+        var x = hexRadius * Math.cos(i * Math.PI / 3);
+        var y = hexRadius * Math.sin(i * Math.PI / 3);
+        hexGeometry.vertices.push(new THREE.Vector3(x, y, 0));
+    }
+    
+    
+    var hexes = [];
+
+    values.forEach(function (t) {
+        var pos = helix(t);
+        var tangent = helixPrime(t);
+
+        var norm = new THREE.Vector3(tangent[0], tangent[1], tangent[2]);
+        norm.normalize();
+        var quat = new THREE.Quaternion();
+        quat.setFromUnitVectors(up, norm);
+
+        var hex = new THREE.Line(hexGeometry, lineMaterial);
+
+        hex.position.set.apply(hex.position, pos);
+        hex.quaternion.multiply(quat);
+        
+        //console.log(hex.position);
+        hexes.push(hex);
+        //scene.add(hex);
+    });
+
+
+
+    var vertexArrays = hexes.map(function (mesh) {
+        mesh.updateMatrix();
+
+        var matrix = mesh.matrix;
+        return mesh.geometry.vertices.map(function (vertex) {
+            var result = new THREE.Vector3();
+            result.copy(vertex);
+            result.applyMatrix4(matrix);
+            return result;
+        });
+    });
+   
+    
+    var edges = [];
+    for (i = 0; i < 6; i++) {
+        edges.push(new THREE.Geometry());
+    }
+    
+    var surfaceGeometry = new THREE.Geometry();
+    
+    for (var i = 0; i < vertexArrays.length; i++) {
+        var array1 = vertexArrays[i];
+        
+        for (var j = 0; j < 6; j++) {
+            edges[j].vertices.push(array1[j]);
+            surfaceGeometry.vertices.push(array1[j]);
+        }
+    }
+    
+    for (var j = 0; j < 6; j++) {
+        for (var i = 0; i < vertexArrays.length - 2; i++) {
+            var index = 6 * i + j;
+            surfaceGeometry.faces.push(new THREE.Face3(index, index + 1, index + 6));
+            surfaceGeometry.faces.push(new THREE.Face3(index + 1, index + 7, index + 6));
+        }
+    }
+
+    // TODO: add a light
+    // TODO: figure out how to rotate around the tangent so that we can twist the sweep
+    var randomMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(Math.random(), Math.random(), Math.random()) });
+    var surfaceMesh = new THREE.Mesh(surfaceGeometry, randomMaterial);
+    scene.add(surfaceMesh);
+
+
+    edges.forEach(function (edgeGeometry) {
+        var edgeLine = new THREE.Line(edgeGeometry, lineMaterial);
+        scene.add(edgeLine);
+    });
+    
 
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0x333333);
