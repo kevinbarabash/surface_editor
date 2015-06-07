@@ -95,7 +95,7 @@ function init() {
     //plane2.quaternion.multiply(endQuat);
     //scene.add( plane2 );
     
-    var hexRadius = 50;
+    var hexRadius = 100;
     var hexGeometry = new THREE.Geometry();
     for (var i = 0; i <= 6; i++) {
         var x = hexRadius * Math.cos(i * Math.PI / 3);
@@ -167,17 +167,29 @@ function init() {
     // TODO: add a light
     // TODO: figure out how to rotate around the tangent so that we can twist the sweep
     var randomMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(Math.random(), Math.random(), Math.random()) });
-    var surfaceMesh = new THREE.Mesh(surfaceGeometry, randomMaterial);
+    var shaderMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            color: { type: 'f', value: 1.0 },
+            //uTex: { type: "t", value: THREE.ImageUtils.loadTexture( "materials/mat (14).png" ) }
+        },
+        vertexShader: document.
+            getElementById('vertShader').text,
+        fragmentShader: document.
+            getElementById('fragShader').text
+    });
+    surfaceGeometry.computeFaceNormals();
+    //surfaceGeometry.computeVertexNormals();
+    var surfaceMesh = new THREE.Mesh(surfaceGeometry, shaderMaterial);
     scene.add(surfaceMesh);
 
 
     edges.forEach(function (edgeGeometry) {
         var edgeLine = new THREE.Line(edgeGeometry, lineMaterial);
-        scene.add(edgeLine);
+        //scene.add(edgeLine);
     });
     
 
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setClearColor(0x333333);
     renderer.setSize( window.innerWidth, window.innerHeight );
 

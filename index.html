@@ -15,4 +15,27 @@
 
 </body>
 </html>
+<script id="vertShader" type="shader">
+varying vec3 vNormal;
+
+void main() {
+    vec3 transformedNormal = normalMatrix * normal;
+    vNormal = normalize(transformedNormal);
+
+    gl_Position = projectionMatrix *
+                  modelViewMatrix * vec4(position, 1.0 );
+}
+</script>
+<script id="fragShader" type="shader">
+precision highp float;
+
+varying vec3 vNormal;
+uniform float color;
+
+void main(void) {
+    float opacity = 1.0;
+    vec2 uv = 0.5 * vec2(vNormal) + 0.5;
+    gl_FragColor = vec4( 0.5 * vNormal + 0.5, opacity );
+}
+</script>
 <script src="src/index.js"></script>
