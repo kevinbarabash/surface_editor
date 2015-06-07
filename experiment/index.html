@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+
+</body>
+</html>
+<script>
+
+    document.body.style.margin = '0';
+
+    var require = function(paths, callback) {
+        var count = 0;
+        paths.forEach(function (path) {
+            var script = document.createElement('script');
+            script.src = path;
+            script.onload = function () {
+                count++;
+                if (count === paths.length) {
+                    callback();
+                }
+            };
+            document.head.appendChild(script);
+        });
+    };
+
+    var requireText = function(path) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', path, false);
+        xhr.send();
+        var response = xhr.response;
+        console.log(response.length);
+        return response;
+    };
+
+    var threeCode = requireText('../lib/three.min.js');
+    eval(threeCode);
+
+    var orbitalCode = requireText('../lib/OrbitControls.js');
+    eval(orbitalCode);
+
+    var scene, geometry, material, mesh, line;
+
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    var renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setClearColor(0x333333);
+    renderer.setSize(width, height);
+    document.body.appendChild(renderer.domElement);
+
+    var camera = new THREE.OrthographicCamera(-width/2, width/2, height/2, -height/2, 0.01, 10000);
+    camera.position.z = 1000;
+
+
+    scene = new THREE.Scene();
+
+    geometry = new THREE.PlaneGeometry( 400, 400, 32, 32 );
+    material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+
+    mesh = new THREE.Mesh(geometry, material );
+
+//        scene.add(mesh);
+
+    material = new THREE.LineBasicMaterial({
+        color: 0x00ff00
+    });
+
+    var frag = requireText('./frag.glsl');
+    var vert = requireText('./vert.glsl');
+
+    console.log(vert);
+    console.log(frag);
+
+    var t = [];
+    geometry = new THREE.Geometry();
+
+    for (var i = 0; i <= 8 * Math.PI; i += 0.1) {
+        t.push(i);
+        geometry.vertices.push(
+            new THREE.Vector3( 0, 0, 0 )
+        );
+    }
+
+    var shaderMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            a: { type: 'f', value: 100 },
+            b: { type: 'f', value: 30 },
+            color: { type: '3fv', value: [1.0, 1.0, 0.0] }
+        },
+        attributes: {
+            t: { type: 'f', value: t }
+        },
+        vertexShader: vert,
+        fragmentShader: frag
+    });
+
+    line = new THREE.Line( geometry, shaderMaterial );
+    scene.add( line );
+
+    renderer.render( scene, camera );
+
+    var controls = new THREE.OrbitControls(camera);
+
+    function render() {
+        renderer.render( scene, camera );
+    }
+
+    render();
+
+    var down = false;
+    document.addEventListener('mousedown', function () {
+        down = true;
+    });
+    document.addEventListener('mousemove', function () {
+        if (down) {
+            requestAnimationFrame(render);
+        }
+    });
+    document.addEventListener('mouseup', function () {
+        if (down) {
+            down = false;
+        }
+    });
+</script>
