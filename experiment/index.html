@@ -37,8 +37,7 @@
     };
 
     var threeCode = requireText('../lib/three.min.js');
-    eval(threeCode);
-
+    var THREE = (new Function(threeCode + "return THREE;"))();
     var orbitalCode = requireText('../lib/OrbitControls.js');
     eval(orbitalCode);
 

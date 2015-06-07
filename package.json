@@ -1,0 +1,31 @@
+{
+  "name": "surface_editor",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "watch": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevinb7/surface_editor.git"
+  },
+  "author": "Kevin Barabash <kevinb7@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kevinb7/surface_editor/issues"
+  },
+  "homepage": "https://github.com/kevinb7/surface_editor",
+  "dependencies": {
+    "gl-matrix": "^2.1.0"
+  },
+  "devDependencies": {
+    "babel-core": "^5.5.4",
+    "babel-loader": "^5.1.4",
+    "node-libs-browser": "^0.5.2",
+    "raw-loader": "^0.5.1",
+    "webpack": "^1.9.10"
+  }
+}
